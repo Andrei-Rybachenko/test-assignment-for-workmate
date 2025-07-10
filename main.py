@@ -1,7 +1,3 @@
-#!/usr/bin/env python3
-"""
-CSV Processor with filtering and aggregation support
-"""
 
 import argparse
 import csv
@@ -10,7 +6,7 @@ from tabulate import tabulate
 
 
 def parse_condition(condition):
-    """Parse condition string like 'price>500' or 'brand=apple'"""
+    """ Парсим строку с условием """
     operators = ['>=', '<=', '>', '<', '=']
 
     for op in operators:
@@ -24,7 +20,7 @@ def parse_condition(condition):
 
 
 def apply_filter(rows, headers, condition):
-    """Apply filter condition to rows"""
+    """ Фильтр данных по условию """
     column, operator, value = parse_condition(condition)
 
     if column not in headers:
@@ -36,7 +32,6 @@ def apply_filter(rows, headers, condition):
     for row in rows:
         cell_value = row[col_index]
 
-        # Try to convert to number for numeric comparisons
         try:
             cell_num = float(cell_value)
             value_num = float(value)
@@ -53,18 +48,17 @@ def apply_filter(rows, headers, condition):
                 filtered_rows.append(row)
 
         except ValueError:
-            # Non-numeric comparison
+
             if operator == '=' and cell_value == value:
                 filtered_rows.append(row)
             elif operator != '=':
-                # Skip non-numeric values for numeric operators
                 continue
 
     return filtered_rows
 
 
 def apply_aggregation(rows, headers, condition):
-    """Apply aggregation to rows"""
+    """ Аггрегация данных по условию """
     parts = condition.split('=', 1)
     if len(parts) != 2:
         raise ValueError(f"Invalid aggregation format: {condition}")
@@ -77,7 +71,6 @@ def apply_aggregation(rows, headers, condition):
     col_index = headers.index(column)
     values = []
 
-    # Collect numeric values from the column
     for row in rows:
         try:
             values.append(float(row[col_index]))
@@ -87,7 +80,6 @@ def apply_aggregation(rows, headers, condition):
     if not values:
         return []
 
-    # Calculate aggregation
     if func == 'avg':
         result = sum(values) / len(values)
     elif func == 'min':
@@ -109,23 +101,20 @@ def main():
     args = parser.parse_args()
 
     try:
-        # Read CSV file
+
         with open(args.file, 'r', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
             headers = next(reader)
             rows = list(reader)
 
-        # Apply filtering if specified
         if args.where:
             rows = apply_filter(rows, headers, args.where)
 
-        # Apply aggregation if specified
         if args.aggregate:
             result_rows = apply_aggregation(rows, headers, args.aggregate)
             result_headers = ['Column', 'Function', 'Result']
             print(tabulate(result_rows, headers=result_headers, tablefmt='psql'))
         else:
-            # Display filtered or all data
             print(tabulate(rows, headers=headers, tablefmt='psql'))
 
     except FileNotFoundError:
